@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Superstore Sales Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#11151c;
+    --panel:#171c25;
+    --panel-2:#1d2330;
+    --line:#2a3140;
+    --text:#eef1f6;
+    --muted:#8b93a5;
+    --accent:#ff8a3d;
+    --accent-2:#3dd6c0;
+    --bad:#ff5c6c;
+    --good:#54e0a3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+    padding:32px 28px 60px;
+  }
+  h1{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-0.3px;
+    margin:0 0 2px;
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:26px;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:1.5px;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+    margin-bottom:26px;
+  }
+  .kpi{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;}
+  .kpi .value{font-size:24px;font-weight:700;}
+  .kpi .value.bad{color:var(--bad);}
+  .kpi .value.good{color:var(--good);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .grid3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:15px;
+    font-weight:600;
+  }
+  .card .insight{
+    color:var(--muted);
+    font-size:12.5px;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .card canvas{max-height:260px;}
+
+  .takeaways{
+    background:linear-gradient(135deg,#1d2330,#171c25);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px 24px;
+    margin-top:8px;
+  }
+  .takeaways h2{
+    margin:0 0 14px;
+    font-size:17px;
+  }
+  .takeaways ul{
+    margin:0;
+    padding-left:20px;
+    color:#d7dce5;
+    font-size:13.5px;
+    line-height:1.9;
+  }
+  .takeaways li b{color:var(--accent);}
+  .tag-bad{color:var(--bad);font-weight:600;}
+  .tag-good{color:var(--good);font-weight:600;}
+
+  .footer-note{
+    color:var(--muted);
+    font-size:11.5px;
+    margin-top:24px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Sales Performance · FY2023–FY2024</div>
+<h1>Superstore Sales &amp; Profitability Dashboard</h1>
+<div class="subtitle">A visual story of where the business is winning — and where it's quietly losing money.</div>
+
+<div class="kpi-row" id="kpiRow"></div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Monthly Sales &amp; Profit Trend</h3>
+    <div class="insight">Sales show seasonal peaks (Nov–Dec), but profit growth hasn't kept pace with revenue growth.</div>
+    <canvas id="trendChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Sales by Region</h3>
+    <div class="insight">East leads in revenue; Central and South are the weakest-performing regions.</div>
+    <canvas id="regionChart"></canvas>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Sub-Category Profit — The Loss Makers</h3>
+    <div class="insight"><span class="tag-bad">Tables, Bookcases &amp; Machines are losing money</span> despite healthy sales volume — likely due to heavy discounting and high shipping/production cost.</div>
+    <canvas id="subcatChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Discount vs. Profit</h3>
+    <div class="insight">Profit turns negative once discounts exceed ~20%, especially in Furniture &amp; Technology.</div>
+    <canvas id="discountChart"></canvas>
+  </div>
+</div>
+
+<div class="grid3">
+  <div class="card">
+    <h3>Sales by Category</h3>
+    <canvas id="categoryChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Sales by Segment</h3>
+    <canvas id="segmentChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>Top 8 States by Sales</h3>
+    <canvas id="stateChart"></canvas>
+  </div>
+</div>
+
+<div class="takeaways">
+  <h2>📌 Key Takeaways</h2>
+  <ul>
+    <li><b>Technology</b> is the strongest category — highest sales and highest profit, driven by Phones and Copiers.</li>
+    <li><span class="tag-bad">Tables, Bookcases and Machines are operating at a loss</span> — these need pricing or discount-policy review immediately.</li>
+    <li><b>East region</b> generates the most revenue and profit; <b>Central</b> lags behind across most metrics.</li>
+    <li>Discounts above <b>20%</b> consistently erode profit margin — discount strategy should be capped or targeted.</li>
+    <li><b>Consumer segment</b> drives over half of total sales, making it the priority segment for retention efforts.</li>
+    <li>Sales peak every <b>November</b> (holiday season) — inventory and staffing should be planned around this surge.</li>
+  </ul>
+</div>
+
+<div class="footer-note">Dataset: Synthetic Superstore-style sales data (3,000 orders, FY2023–FY2024) · Built for Data Analyst Internship Task 2</div>
+
+<script>
+const DATA = {"kpis": {"total_sales": 2109761.31, "total_profit": 248869.83, "total_orders": 3000, "profit_margin": 11.8, "avg_discount": 8.7}, "monthly": [{"Month": "2023-01", "Sales": 73165.61, "Profit": 8748.529999999999}, {"Month": "2023-02", "Sales": 65328.14, "Profit": 8621.08}, {"Month": "2023-03", "Sales": 97900.4, "Profit": 11127.49}, {"Month": "2023-04", "Sales": 78585.13, "Profit": 12581.18}, {"Month": "2023-05", "Sales": 92110.61, "Profit": 9780.15}, {"Month": "2023-06", "Sales": 106181.26, "Profit": 15479.74}, {"Month": "2023-07", "Sales": 89038.94, "Profit": 11451.14}, {"Month": "2023-08", "Sales": 99831.08, "Profit": 10893.16}, {"Month": "2023-09", "Sales": 89818.88, "Profit": 10749.66}, {"Month": "2023-10", "Sales": 63372.68, "Profit": 6415.53}, {"Month": "2023-11", "Sales": 64803.76, "Profit": 8363.28}, {"Month": "2023-12", "Sales": 99105.07, "Profit": 11467.48}, {"Month": "2024-01", "Sales": 94146.09, "Profit": 8791.56}, {"Month": "2024-02", "Sales": 81501.15, "Profit": 7421.26}, {"Month": "2024-03", "Sales": 80318.05, "Profit": 8535.46}, {"Month": "2024-04", "Sales": 95622.62, "Profit": 12340.35}, {"Month": "2024-05", "Sales": 76631.94, "Profit": 10985.69}, {"Month": "2024-06", "Sales": 95501.21, "Profit": 8430.81}, {"Month": "2024-07", "Sales": 74782.49, "Profit": 8701.44}, {"Month": "2024-08", "Sales": 104365.01, "Profit": 11421.99}, {"Month": "2024-09", "Sales": 75166.09, "Profit": 8652.23}, {"Month": "2024-10", "Sales": 83606.76, "Profit": 7642.900000000001}, {"Month": "2024-11", "Sales": 131122.41, "Profit": 17106.88}, {"Month": "2024-12", "Sales": 97755.93000000001, "Profit": 13160.84}], "region": [{"Region": "East", "Sales": 664987.84, "Profit": 85692.19}, {"Region": "West", "Sales": 579371.45, "Profit": 67225.89}, {"Region": "Central", "Sales": 443384.41, "Profit": 42739.13}, {"Region": "South", "Sales": 422017.61, "Profit": 53212.62}], "category": [{"Category": "Technology", "Sales": 1176988.29, "Profit": 168449.98}, {"Category": "Furniture", "Sales": 691666.88, "Profit": 31455.39}, {"Category": "Office Supplies", "Sales": 241106.14, "Profit": 48964.46}], "subcategory": [{"Sub-Category": "Tables", "Sales": 188742.03, "Profit": -18060.55}, {"Sub-Category": "Bookcases", "Sales": 170253.07, "Profit": -16360.05}, {"Sub-Category": "Machines", "Sales": 308041.59, "Profit": -7241.17}, {"Sub-Category": "Storage", "Sales": 30128.62, "Profit": 5969.5}, {"Sub-Category": "Paper", "Sales": 30673.010000000002, "Profit": 6417.93}, {"Sub-Category": "Binders", "Sales": 34186.82, "Profit": 6793.08}, {"Sub-Category": "Envelopes", "Sales": 33205.6, "Profit": 7032.54}, {"Sub-Category": "Supplies", "Sales": 34915.88, "Profit": 7098.03}, {"Sub-Category": "Art", "Sales": 36051.04, "Profit": 7113.55}, {"Sub-Category": "Labels", "Sales": 41945.17, "Profit": 8539.83}, {"Sub-Category": "Chairs", "Sales": 160867.95, "Profit": 32073.05}, {"Sub-Category": "Furnishings", "Sales": 171803.83, "Profit": 33802.94}, {"Sub-Category": "Accessories", "Sales": 269148.19, "Profit": 53155.659999999996}, {"Sub-Category": "Copiers", "Sales": 266532.33, "Profit": 53698.69}, {"Sub-Category": "Phones", "Sales": 333266.18, "Profit": 68836.8}], "segment": [{"Segment": "Consumer", "Sales": 1086260.24, "Profit": 127743.17}, {"Segment": "Corporate", "Sales": 605598.26, "Profit": 66140.16}, {"Segment": "Home Office", "Sales": 417902.81, "Profit": 54986.5}], "top_states": [{"State": "Pennsylvania", "Sales": 156267.55}, {"State": "California", "Sales": 134700.34}, {"State": "New York", "Sales": 132909.14}, {"State": "Massachusetts", "Sales": 132075.48}, {"State": "Arizona", "Sales": 132019.29}, {"State": "Virginia", "Sales": 128577.26}, {"State": "New Jersey", "Sales": 115158.41}, {"State": "Nevada", "Sales": 114588.9}], "discount_profit": [{"Discount": 0.0, "Profit": 28.39, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 18.84, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 13.68, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 314.13, "Category": "Furniture"}, {"Discount": 0.4, "Profit": 351.22, "Category": "Technology"}, {"Discount": 0.15, "Profit": 53.34, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 18.45, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 422.3, "Category": "Technology"}, {"Discount": 0.15, "Profit": 13.79, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 7.9, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 68.14, "Category": "Technology"}, {"Discount": 0.3, "Profit": 23.88, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 23.31, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 96.56, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 15.19, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": -148.26, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 70.62, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 25.07, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 109.08, "Category": "Technology"}, {"Discount": 0.2, "Profit": 16.21, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 15.39, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 13.76, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 572.53, "Category": "Technology"}, {"Discount": 0.0, "Profit": 44.8, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": -5.86, "Category": "Furniture"}, {"Discount": 0.3, "Profit": 15.0, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 15.44, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 14.33, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 57.94, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 73.68, "Category": "Office Supplies"}, {"Discount": 0.3, "Profit": 19.04, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": -20.89, "Category": "Technology"}, {"Discount": 0.3, "Profit": 10.18, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 7.47, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 5.76, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 16.58, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": -465.09, "Category": "Technology"}, {"Discount": 0.0, "Profit": 191.88, "Category": "Technology"}, {"Discount": 0.1, "Profit": 188.2, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 59.06, "Category": "Technology"}, {"Discount": 0.0, "Profit": 6.68, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 135.76, "Category": "Technology"}, {"Discount": 0.0, "Profit": 14.33, "Category": "Technology"}, {"Discount": 0.3, "Profit": 31.11, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": -141.67, "Category": "Technology"}, {"Discount": 0.0, "Profit": 250.44, "Category": "Technology"}, {"Discount": 0.0, "Profit": 65.09, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 70.32, "Category": "Technology"}, {"Discount": 0.1, "Profit": 147.14, "Category": "Furniture"}, {"Discount": 0.4, "Profit": 35.77, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 733.83, "Category": "Technology"}, {"Discount": 0.15, "Profit": 304.79, "Category": "Furniture"}, {"Discount": 0.2, "Profit": 3.28, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 168.79, "Category": "Technology"}, {"Discount": 0.0, "Profit": 274.02, "Category": "Technology"}, {"Discount": 0.0, "Profit": 417.55, "Category": "Furniture"}, {"Discount": 0.15, "Profit": 35.91, "Category": "Technology"}, {"Discount": 0.0, "Profit": -16.43, "Category": "Furniture"}, {"Discount": 0.1, "Profit": 19.66, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": -102.73, "Category": "Technology"}, {"Discount": 0.0, "Profit": 21.73, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 28.29, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 932.48, "Category": "Technology"}, {"Discount": 0.0, "Profit": 19.16, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 593.14, "Category": "Technology"}, {"Discount": 0.1, "Profit": 27.49, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 58.8, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 38.2, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": -142.73, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 55.41, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 9.14, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 134.03, "Category": "Technology"}, {"Discount": 0.0, "Profit": -55.68, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 55.91, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 223.86, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 70.14, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": -40.25, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 211.17, "Category": "Technology"}, {"Discount": 0.15, "Profit": -17.98, "Category": "Technology"}, {"Discount": 0.1, "Profit": 18.68, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 53.29, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 10.46, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 25.79, "Category": "Office Supplies"}, {"Discount": 0.4, "Profit": 9.4, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 60.85, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 156.77, "Category": "Technology"}, {"Discount": 0.3, "Profit": 58.42, "Category": "Technology"}, {"Discount": 0.2, "Profit": 7.31, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 17.36, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 8.66, "Category": "Office Supplies"}, {"Discount": 0.3, "Profit": 205.48, "Category": "Furniture"}, {"Discount": 0.2, "Profit": 58.63, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 851.96, "Category": "Technology"}, {"Discount": 0.0, "Profit": 34.52, "Category": "Furniture"}, {"Discount": 0.4, "Profit": 57.97, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": -55.97, "Category": "Furniture"}, {"Discount": 0.1, "Profit": 24.41, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 105.4, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 21.43, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 5.59, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 0.12, "Category": "Furniture"}, {"Discount": 0.2, "Profit": 9.35, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 42.95, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 788.35, "Category": "Technology"}, {"Discount": 0.0, "Profit": 291.82, "Category": "Technology"}, {"Discount": 0.4, "Profit": 112.05, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 6.3, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 45.45, "Category": "Office Supplies"}, {"Discount": 0.4, "Profit": 3.04, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 863.88, "Category": "Technology"}, {"Discount": 0.0, "Profit": 26.87, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 8.23, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 45.13, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 29.79, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 609.13, "Category": "Technology"}, {"Discount": 0.0, "Profit": 17.97, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 85.53, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 13.18, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 10.8, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": -428.45, "Category": "Technology"}, {"Discount": 0.4, "Profit": 22.47, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 7.55, "Category": "Office Supplies"}, {"Discount": 0.3, "Profit": 20.3, "Category": "Office Supplies"}, {"Discount": 0.3, "Profit": 33.04, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 25.5, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 49.52, "Category": "Office Supplies"}, {"Discount": 0.1, "Profit": 22.56, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 66.07, "Category": "Furniture"}, {"Discount": 0.1, "Profit": 56.64, "Category": "Office Supplies"}, {"Discount": 0.15, "Profit": 18.09, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 9.66, "Category": "Furniture"}, {"Discount": 0.4, "Profit": 119.16, "Category": "Technology"}, {"Discount": 0.0, "Profit": 4.13, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 323.69, "Category": "Furniture"}, {"Discount": 0.15, "Profit": 606.71, "Category": "Technology"}, {"Discount": 0.0, "Profit": 197.86, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 37.91, "Category": "Furniture"}, {"Discount": 0.3, "Profit": 350.4, "Category": "Technology"}, {"Discount": 0.15, "Profit": 337.09, "Category": "Technology"}, {"Discount": 0.2, "Profit": 18.49, "Category": "Office Supplies"}, {"Discount": 0.2, "Profit": 38.78, "Category": "Furniture"}, {"Discount": 0.3, "Profit": 118.57, "Category": "Technology"}, {"Discount": 0.0, "Profit": -132.54, "Category": "Technology"}, {"Discount": 0.0, "Profit": 101.73, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 15.27, "Category": "Office Supplies"}, {"Discount": 0.3, "Profit": 43.08, "Category": "Technology"}, {"Discount": 0.1, "Profit": 280.69, "Category": "Furniture"}, {"Discount": 0.2, "Profit": -118.9, "Category": "Furniture"}, {"Discount": 0.0, "Profit": 5.02, "Category": "Office Supplies"}, {"Discount": 0.0, "Profit": 3.78, "Category": "Office Supplies"}]};
+
+Chart.defaults.color = '#8b93a5';
+Chart.defaults.font.family = "'Segoe UI', Helvetica, Arial, sans-serif";
+Chart.defaults.borderColor = '#2a3140';
+
+function fmt(n){
+  if(Math.abs(n) >= 1000) return (n/1000).toFixed(0)+'K';
+  return n.toFixed(0);
+}
+
+// KPIs
+const k = DATA.kpis;
+const kpiRow = document.getElementById('kpiRow');
+const kpis = [
+  {label:'Total Sales', value:'$'+k.total_sales.toLocaleString(undefined,{maximumFractionDigits:0}), cls:''},
+  {label:'Total Profit', value:'$'+k.total_profit.toLocaleString(undefined,{maximumFractionDigits:0}), cls:'good'},
+  {label:'Profit Margin', value:k.profit_margin+'%', cls:''},
+  {label:'Total Orders', value:k.total_orders.toLocaleString(), cls:''},
+  {label:'Avg. Discount', value:k.avg_discount+'%', cls:''},
+];
+kpiRow.innerHTML = kpis.map(x => `
+  <div class="kpi">
+    <div class="label">${x.label}</div>
+    <div class="value ${x.cls}">${x.value}</div>
+  </div>`).join('');
+
+// Trend chart
+new Chart(document.getElementById('trendChart'), {
+  type:'line',
+  data:{
+    labels: DATA.monthly.map(d=>d.Month),
+    datasets:[
+      {label:'Sales', data: DATA.monthly.map(d=>d.Sales), borderColor:'#ff8a3d', backgroundColor:'rgba(255,138,61,0.12)', fill:true, tension:0.35, yAxisID:'y'},
+      {label:'Profit', data: DATA.monthly.map(d=>d.Profit), borderColor:'#3dd6c0', backgroundColor:'rgba(61,214,192,0.08)', fill:true, tension:0.35, yAxisID:'y1'}
+    ]
+  },
+  options:{
+    responsive:true,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{boxWidth:10,font:{size:11}}}},
+    scales:{
+      x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:8,font:{size:10}},grid:{display:false}},
+      y:{position:'left',ticks:{callback:v=>'$'+fmt(v),font:{size:10}}},
+      y1:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+fmt(v),font:{size:10}}}
+    }
+  }
+});
+
+// Region chart
+new Chart(document.getElementById('regionChart'), {
+  type:'bar',
+  data:{
+    labels: DATA.region.map(d=>d.Region),
+    datasets:[{label:'Sales', data: DATA.region.map(d=>d.Sales), backgroundColor:'#ff8a3d', borderRadius:5}]
+  },
+  options:{
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{ticks:{callback:v=>'$'+fmt(v),font:{size:10}}},
+      x:{grid:{display:false},ticks:{font:{size:11}}}
+    }
+  }
+});
+
+// Subcategory profit (loss makers highlighted)
+const subcat = DATA.subcategory;
+new Chart(document.getElementById('subcatChart'), {
+  type:'bar',
+  data:{
+    labels: subcat.map(d=>d['Sub-Category']),
+    datasets:[{
+      label:'Profit',
+      data: subcat.map(d=>d.Profit),
+      backgroundColor: subcat.map(d=>d.Profit < 0 ? '#ff5c6c' : '#54e0a3'),
+      borderRadius:4
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{callback:v=>'$'+fmt(v),font:{size:10}}},
+      y:{grid:{display:false},ticks:{font:{size:10.5}}}
+    }
+  }
+});
+
+// Discount vs profit scatter
+new Chart(document.getElementById('discountChart'), {
+  type:'scatter',
+  data:{
+    datasets:[{
+      label:'Orders',
+      data: DATA.discount_profit.map(d=>({x:d.Discount*100,y:d.Profit})),
+      backgroundColor: DATA.discount_profit.map(d=>d.Profit<0?'rgba(255,92,108,0.7)':'rgba(61,214,192,0.6)'),
+      pointRadius:4
+    }]
+  },
+  options:{
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{title:{display:true,text:'Discount %',color:'#8b93a5',font:{size:11}},ticks:{font:{size:10}}},
+      y:{title:{display:true,text:'Profit ($)',color:'#8b93a5',font:{size:11}},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+// Category chart (doughnut)
+new Chart(document.getElementById('categoryChart'), {
+  type:'doughnut',
+  data:{
+    labels: DATA.category.map(d=>d.Category),
+    datasets:[{data: DATA.category.map(d=>d.Sales), backgroundColor:['#ff8a3d','#3dd6c0','#5a7bff'], borderColor:'#171c25', borderWidth:3}]
+  },
+  options:{
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}}
+  }
+});
+
+// Segment chart
+new Chart(document.getElementById('segmentChart'), {
+  type:'bar',
+  data:{
+    labels: DATA.segment.map(d=>d.Segment),
+    datasets:[{label:'Sales', data: DATA.segment.map(d=>d.Sales), backgroundColor:'#5a7bff', borderRadius:5}]
+  },
+  options:{
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{ticks:{callback:v=>'$'+fmt(v),font:{size:10}}},
+      x:{grid:{display:false},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+// Top states
+new Chart(document.getElementById('stateChart'), {
+  type:'bar',
+  data:{
+    labels: DATA.top_states.map(d=>d.State),
+    datasets:[{label:'Sales', data: DATA.top_states.map(d=>d.Sales), backgroundColor:'#54e0a3', borderRadius:5}]
+  },
+  options:{
+    indexAxis:'y',
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{callback:v=>'$'+fmt(v),font:{size:10}}},
+      y:{grid:{display:false},ticks:{font:{size:10}}}
+    }
+  }
+});
+</script>
+</body>
+</html>
